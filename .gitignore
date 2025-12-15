@@ -1,0 +1,18 @@
+# Entornos virtuales
+.venv/
+venv/
+
+# Cachés
+__pycache__/
+*.pyc
+
+# Variables de entorno
+.env
+Challenge/.env
+**/.env
+
+# Archivos temporales
+*.log
+
+# Data
+data/*
