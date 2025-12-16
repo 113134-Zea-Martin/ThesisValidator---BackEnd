@@ -53,34 +53,35 @@ def register_routes(app: FastAPI):
     @app.get("/embeddings", summary="Listar embeddings generados en ChromaDB")
     def _list_embeddings():
         try:
-            # Obtener colección de ChromaDB
-            collection = service._get_chroma_collection()
+            # # Obtener colección de ChromaDB
+            # collection = service._get_chroma_collection()
             
-            # Recuperar todos los datos indexados
-            all_data = collection.get(include=["embeddings", "documents", "metadatas"])
+            # # Recuperar todos los datos indexados
+            # all_data = collection.get(include=["embeddings", "documents", "metadatas"])
             
-            # Formatear respuesta
-            embeddings_info = {
-                "total_chunks": len(all_data["ids"]),
-                "chunks": []
-            }
+            # # Formatear respuesta
+            # embeddings_info = {
+            #     "total_chunks": len(all_data["ids"]),
+            #     "chunks": []
+            # }
             
-            for i, chunk_id in enumerate(all_data["ids"]):
-                # ✅ Verificar que embeddings existe Y que tiene datos
-                embedding_length = 0
-                if all_data["embeddings"] is not None and len(all_data["embeddings"]) > i:
-                    embedding_length = len(all_data["embeddings"][i])
+            # for i, chunk_id in enumerate(all_data["ids"]):
+            #     # ✅ Verificar que embeddings existe Y que tiene datos
+            #     embedding_length = 0
+            #     if all_data["embeddings"] is not None and len(all_data["embeddings"]) > i:
+            #         embedding_length = len(all_data["embeddings"][i])
                 
-                embeddings_info["chunks"].append({
-                    "chunk_id": chunk_id,
-                    "document_id": all_data["metadatas"][i].get("source"),
-                    "title": all_data["metadatas"][i].get("title"),
-                    "chunk_index": all_data["metadatas"][i].get("chunk_index"),
-                    "content_snippet": all_data["documents"][i][:200],
-                    "embedding_length": embedding_length
-                })
+            #     embeddings_info["chunks"].append({
+            #         "chunk_id": chunk_id,
+            #         "document_id": all_data["metadatas"][i].get("source"),
+            #         "title": all_data["metadatas"][i].get("title"),
+            #         "chunk_index": all_data["metadatas"][i].get("chunk_index"),
+            #         "content_snippet": all_data["documents"][i][:200],
+            #         "embedding_length": embedding_length
+            #     })
             
-            return embeddings_info
+            # return embeddings_info
+            return service.vector_store.list_all_embeddings()
         except Exception as e:
             logger.error("Error al listar embeddings: %s", e)
             raise HTTPException(
@@ -113,6 +114,38 @@ def register_routes(app: FastAPI):
             logger.error("Error en /ask: %s", e)
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error interno al responder")
 
+    @app.get("/conversations", summary="Listar historial de conversaciones")
+    def list_conversations():
+        """
+        Devuelve el historial de preguntas y respuestas almacenadas.
+        """
+        try:
+            with storage.db_path.open("rb"):
+                import sqlite3
+                conn = sqlite3.connect(storage.db_path)
+                cursor = conn.execute(
+                    "SELECT id, question, answer, context, groundedness, created_at FROM conversations ORDER BY created_at DESC"
+                )
+                conversations = [
+                    {
+                        "id": row[0],
+                        "question": row[1],
+                        "answer": row[2],
+                        "context": row[3],
+                        "groundedness": row[4],
+                        "created_at": row[5],
+                    }
+                    for row in cursor.fetchall()
+                ]
+                conn.close()
+            return conversations
+        except Exception as e:
+            logger.error("Error al listar conversaciones: %s", e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error interno al listar conversaciones"
+            )
+        
 def _contains_sensitive_content(text: str) -> bool:
     sensitive_keywords = ["contraseña", "password", "tarjeta", "credencial", "secreto"]
     return any(keyword in text.lower() for keyword in sensitive_keywords)

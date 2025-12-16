@@ -26,6 +26,16 @@ class DocumentStorage:
                     created_at TIMESTAMP NOT NULL
                 )
             """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS conversations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    question TEXT NOT NULL,
+                    answer TEXT NOT NULL,
+                    context TEXT,
+                    groundedness REAL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
             conn.commit()
 
     def _load_cache(self):
@@ -99,3 +109,12 @@ class DocumentStorage:
                 })
         answer = "Respuesta basada en coincidencias simples de texto."
         return answer, context
+    
+    def save_conversation(self, question: str, answer: str, context: str, groundedness: float):
+        with sqlite3.connect(self.db_path) as conn:
+            c = conn.cursor()
+            c.execute(
+                "INSERT INTO conversations (question, answer, context, groundedness) VALUES (?, ?, ?, ?)",
+                (question, answer, context, groundedness)
+            )
+            conn.commit()
