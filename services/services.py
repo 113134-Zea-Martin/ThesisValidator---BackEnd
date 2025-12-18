@@ -105,7 +105,7 @@ class TextProcessor:
         return chunks if chunks else self._chunk_basic(text, chunk_size, overlap)
 
     def _chunk_section(self, title: str, content: str, chunk_size: int, overlap: int) -> List[str]:
-        """Divide una sección grande en múltiples chunks"""
+        """Divide una sección grande en múltiples chunks. Chunking estructural"""
         chunks = []
         paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]
         current_chunk = ""
@@ -257,7 +257,7 @@ class VectorStore:
     def add_documents(self, document_id: str, chunks: List[str], 
                      title: str = "") -> bool:
         """
-        Genera embeddings y almacena chunks en ChromaDB
+        Genera embeddings y almacena chunks en ChromaDB (Batching)
         """
         if len(chunks) > MAX_CHUNKS_PER_DOCUMENT:
             logger.warning(
@@ -383,10 +383,12 @@ class RAGEngine:
 
     def retrieve_and_rerank(self, question: str, n_final: int = RAG_RETRIEVE_CHUNKS) -> List[Dict]:
         """
-        Recupera chunks relevantes y los re-rankea
+        Recupera chunks relevantes y los re-rankea (Reducción del contexto)
         """
         # PASO 1: Recuperar candidatos
         results = self.vector_store.query(question, n_results=RAG_RETRIEVE_CHUNKS_INITIAL)
+        # RAG_RETRIEVE_CHUNKS_INITIAL Recupera muchos para re-ranking
+        # RAG RETRIEVE_CHUNKS Devuelve pocos al final
         
         docs = results.get("documents", [[]])[0]
         metadatas = results.get("metadatas", [[]])[0]
@@ -396,7 +398,7 @@ class RAGEngine:
         if not docs:
             return []
 
-        # PASO 2: Re-ranking con Cohere
+        # PASO 2: Re-ranking semántico con Cohere
         co = self.vector_store.get_cohere_client()
         try:
             rerank_response = co.rerank(
@@ -436,7 +438,7 @@ class RAGEngine:
             meta = metadatas[idx] if idx < len(metadatas) else {}
             dist = distances[idx] if distances and idx < len(distances) else None
             
-            # Filtrar por distancia máxima
+            # Filtrar por distancia máxima (Filtrado por similitud)
             if dist is not None and dist > MAX_CHUNK_DISTANCE:
                 continue
             
@@ -467,6 +469,7 @@ class RAGEngine:
         if not context_items:
             return NO_INFO_MESSAGE
         
+        # Contexto explicito en el prompt (El LLM sabe exactamente de donde saca la información)
         context_text = "\n\n".join([
             f"[Fragmento {i+1} de {len(context_items)}]\n{item['content']}" 
             for i, item in enumerate(context_items)
@@ -509,6 +512,7 @@ class RAGEngine:
         ).embeddings
         
         sims = [
+            # Métrica cuantitativa post-respuesta
             np.dot(resp_emb, ctx_emb) / (np.linalg.norm(resp_emb) * np.linalg.norm(ctx_emb)) 
             for ctx_emb in ctx_embs
         ]
@@ -648,7 +652,7 @@ class DocumentService:
     def answer_question(self, request: QuestionRequest) -> AnswerResponse:
         """Responde una pregunta usando RAG o directamente del LLM"""
         
-        # Decidir si usar RAG
+        # Decidir si usar RAG (Decisión dinámica de uso de RAG)
         if not self.rag_engine.should_use_rag(request.question):
             return self._answer_direct(request.question)
         

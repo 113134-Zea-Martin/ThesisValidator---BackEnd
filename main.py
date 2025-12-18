@@ -55,10 +55,23 @@ async def root():
         "message": "Get Talent RAG API está funcionando",
         "version": "1.0.0",
         "endpoints": {
+            
+#    - `POST /upload`: Sube un documento académico.
+#    - `POST /generate-embeddings`: Genera embeddings para un documento.
+#    - `POST /search`: Busca fragmentos relevantes.
+#    - `POST /ask`: Realiza una pregunta sobre los documentos cargados.
+#    - `GET /documents`: Lista los documentos cargados.
+#    - `GET /embeddings`: Lista los embeddings generados.
+#    - `GET /conversations`: Historial de preguntas y respuestas.
+#    - `GET /health`: Chequeo de salud del servicio.
+
             "upload": "POST /upload",
+            "documents": "GET /documents",
             "generate_embeddings": "POST /generate-embeddings",
+            "embeddings": "GET /embeddings",
             "search": "POST /search",
             "ask": "POST /ask",
+            "conversations": "GET /conversations",
         },
     }
 
