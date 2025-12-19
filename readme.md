@@ -4,6 +4,7 @@ Sistema RAG (Retrieval-Augmented Generation) para búsqueda semántica y generac
 
 ---
 
+
 ## Tabla de contenidos
 
 - [Características](#características)
@@ -15,6 +16,7 @@ Sistema RAG (Retrieval-Augmented Generation) para búsqueda semántica y generac
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Instalación](#instalación)
 - [Uso](#uso)
+- [Tests](#tests)
 - [Ejemplo de flujo](#ejemplo-de-flujo)
 - [Tecnologías utilizadas](#tecnologías-utilizadas)
 - [Notas](#notas)
@@ -124,7 +126,7 @@ La arquitectura es compatible con despliegues en plataformas como Render o Railw
 
 1. **Clona el repositorio**  
    ```sh
-   git clone <repo-url>
+   git clone https://github.com/113134-Zea-Martin/ThesisValidator---BackEnd
    cd ThesisValidator---BackEnd
    ```
 
@@ -147,6 +149,7 @@ La arquitectura es compatible con despliegues en plataformas como Render o Railw
 
 ---
 
+
 ## Uso
 
 1. **Inicia el servidor**
@@ -167,6 +170,18 @@ La arquitectura es compatible con despliegues en plataformas como Render o Railw
    - `GET /embeddings`: Lista los embeddings generados.
    - `GET /conversations`: Historial de preguntas y respuestas.
    - `GET /health`: Chequeo de salud del servicio.
+
+---
+
+## Tests
+
+Para ejecutar los tests, usa el siguiente comando en la terminal:
+
+```bash
+pytest -s api/test_endpoints.py
+```
+
+---
 
 ---
 
